@@ -1,0 +1,59 @@
+package demo.robot
+
+import com.jme3.light.PointLight
+import com.jme3.material.Material
+import com.jme3.math.ColorRGBA
+import com.jme3.scene.shape.Box
+import com.jme3.scene.{Geometry, Mesh, VertexBuffer}
+import com.jme3.util.BufferUtils
+import eu.mihosoft.jcsg.{CSG, Cube, Cylinder, Sphere}
+import eu.mihosoft.vvecmath.Transform
+import jmex.util.MonkeyApp
+
+import scala.jdk.CollectionConverters.*
+
+object LinkTest1 extends MonkeyApp():
+
+  def createMesh() =
+    CSG.setDefaultOptType(CSG.OptType.POLYGON_BOUND)
+    val t = Transform.unity().translateZ(-4)
+    val cylL = Cylinder(4.0, 4.0, 1.0, 16).toCSG()
+    val cylS = Cylinder(2.0, 2.0, 8.0, 25).toCSG().transformed(t)
+    val box = Cube(8, 4, 0.2).toCSG().transformed(t)
+    val csg = cylL.difference(cylS)
+    val ps = csg.getPolygons().asScala
+    val ts = ps.flatMap(p => p.toTriangles().asScala)
+    val posB = BufferUtils.createFloatBuffer(ts.size * 3 * 3)
+    for t <- ts do
+      for v <- t.vertices.asScala do
+        for i <- 0 to 2 do posB.put(v.pos.get(i).toFloat)
+    posB.rewind()
+    // for i <- 0 to posB.capacity() - 1 do
+    //   println(posB.get(i))
+    val indB = BufferUtils.createIntBuffer(ts.size * 3)
+    for i <- 0 to ts.size - 1 do
+      indB.put(i * 3 + 0)
+      indB.put(i * 3 + 1)
+      indB.put(i * 3 + 2)
+    indB.rewind()
+    val mesh = Mesh()
+    mesh.setMode(Mesh.Mode.Triangles)
+    mesh.setBuffer(VertexBuffer.Type.Position, 3, posB)
+    mesh.setBuffer(VertexBuffer.Type.Index, 1, indB)
+    // TangentBinormalGenerator.generate(mesh)
+    mesh
+
+  override def simpleInitApp() =
+
+    getCamera().getTranslation().set(0, 5, 20)
+    getCamera().lookAt(v(0, 0, 0))
+    val mat = Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+    mat.setColor("Color", ColorRGBA.Blue)
+    mat.getAdditionalRenderState().setWireframe(true)
+    val geo = Geometry("", createMesh())
+    geo.setMaterial(mat)
+    rootNode.attachChild(geo)
+
+  override def simpleUpdate(tpf: Float) =
+    // rootNode.rotate(0.001f, 0.001f, 0.001f)
+    rootNode.rotateX(0.001f)

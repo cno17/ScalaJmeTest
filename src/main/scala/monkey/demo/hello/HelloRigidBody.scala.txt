@@ -1,0 +1,39 @@
+package monkey.demo.hello
+
+import com.jme3.bullet.BulletAppState
+import com.jme3.bullet.collision.shapes.SphereCollisionShape
+import com.jme3.bullet.objects.PhysicsRigidBody
+import monkey.util.application.old.MonkeyApp
+
+object HelloRigidBody extends MonkeyApp:
+
+  override def simpleInitApp() =
+    // Set up Bullet physics and create a physics space.
+    val bulletAppState = BulletAppState()
+    stateManager.attach(bulletAppState)
+    val physicsSpace = bulletAppState.getPhysicsSpace()
+    // Enable debug visualization to reveal what occurs in physics space.
+    bulletAppState.setDebugEnabled(true)
+    // For clarity, simulate at 1/10th normal speed.
+    bulletAppState.setSpeed(0.1f)
+
+    // Create a CollisionShape for balls.
+    val ballRadius = 1f
+    val ballShape = SphereCollisionShape(ballRadius)
+    // Create 2 balls (dynamic rigid bodies) and add them to the space.
+    val ballMass = 2f
+    val ball1 = PhysicsRigidBody(ballShape, ballMass)
+    val ball2 = PhysicsRigidBody(ballShape, ballMass)
+    physicsSpace.addCollisionObject(ball1)
+    physicsSpace.addCollisionObject(ball2)
+
+    // Locate the balls initially 2 PSU (physics-space units) apart.
+    // In other words, 4 PSU from center to center.
+    ball1.setPhysicsLocation(V(1f, 1f, 0f))
+    ball2.setPhysicsLocation(V(5f, 1f, 0f))
+
+    // Set ball #2 on a collision course with ball #1.
+    // ball2.applyCentralImpulse(Vector3f(-25f, 0f, 0f))
+    ball2.applyImpulse(V(-10, 0, 0), V(0, 0, 0))
+
+    // Minie's BulletAppState simulates the dynamics...

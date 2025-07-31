@@ -1,0 +1,61 @@
+package monkey.demo.hello
+
+import com.jme3.effect.ParticleEmitter
+import com.jme3.effect.ParticleMesh
+import com.jme3.material.Material
+import com.jme3.math.ColorRGBA
+import monkey.util.application.old.MonkeyApp
+
+/** Sample 11 - how to create fire, water, and explosion effects. */
+object HelloEffects extends MonkeyApp:
+
+  override def simpleInitApp() =
+    val fire = ParticleEmitter("Emitter", ParticleMesh.Type.Triangle, 30)
+    val mat_red = Material(assetManager, "Common/MatDefs/Misc/Particle.j3md")
+    mat_red.setTexture("Texture", assetManager.loadTexture("Effects/Explosion/Flame.png"))
+    fire.setMaterial(mat_red)
+    fire.setImagesX(2)
+    fire.setImagesY(2) // 2x2 texture animation
+    fire.setEndColor(C(1f, 0f, 0f))
+    fire.setStartColor(C(1f, 1f, 0f))
+    fire.getParticleInfluencer().setInitialVelocity(V(0f, 2f, 0f))
+    fire.setStartSize(1.5f)
+    fire.setEndSize(0.1f)
+    fire.setGravity(0f, 0f, 0f)
+    fire.setLowLife(1f)
+    fire.setHighLife(3f)
+    fire.getParticleInfluencer().setVelocityVariation(0.3f)
+    rootNode.attachChild(fire)
+    val debris = ParticleEmitter("Debris", ParticleMesh.Type.Triangle, 10)
+    val debris_mat = Material(assetManager, "Common/MatDefs/Misc/Particle.j3md")
+    debris_mat.setTexture("Texture", assetManager.loadTexture("Effects/Explosion/Debris.png"))
+    debris.setMaterial(debris_mat)
+    debris.setImagesX(3)
+    debris.setImagesY(3) // 3x3 texture animation
+    debris.setSelectRandomImage(true)
+    debris.setRotateSpeed(4f)
+    debris.getParticleInfluencer().setInitialVelocity(V(0f, 4f, 0f))
+    debris.setStartColor(ColorRGBA.White)
+    debris.setGravity(0f, 6f, 0f)
+    debris.getParticleInfluencer().setVelocityVariation(0.6f)
+    rootNode.attachChild(debris)
+    debris.emitAllParticles()
+
+    // move!
+    val water = ParticleEmitter("Emitter", ParticleMesh.Type.Triangle, 20)
+    val mat_blue = new Material(assetManager, "Common/MatDefs/Misc/Particle.j3md")
+    mat_blue.setTexture("Texture", assetManager.loadTexture("Effects/Explosion/Flame.png"))
+    water.setMaterial(mat_blue)
+    water.setImagesX(2)
+    water.setImagesY(2) // 2x2 texture animation
+    water.setStartColor(ColorRGBA.Blue)
+    water.setEndColor(ColorRGBA.Cyan)
+    water.getParticleInfluencer().setInitialVelocity(V(0, -4, 0))
+    water.setStartSize(1f)
+    water.setEndSize(1.5f)
+    water.setGravity(0, 1, 0)
+    water.setLowLife(1f)
+    water.setHighLife(1f)
+    water.getParticleInfluencer().setVelocityVariation(0.1f)
+    water.setLocalTranslation(0, 6, 0)
+    rootNode.attachChild(water)

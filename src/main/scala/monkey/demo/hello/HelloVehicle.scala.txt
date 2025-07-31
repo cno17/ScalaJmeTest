@@ -1,0 +1,83 @@
+package monkey.demo.hello
+
+import com.jme3.bullet.BulletAppState
+import com.jme3.bullet.PhysicsSpace
+import com.jme3.bullet.collision.shapes.HullCollisionShape
+import com.jme3.bullet.collision.shapes.PlaneCollisionShape
+import com.jme3.bullet.objects.PhysicsRigidBody
+import com.jme3.bullet.objects.PhysicsVehicle
+import com.jme3.math.FastMath
+import com.jme3.math.Plane
+import com.jme3.math.Vector3f
+import monkey.util.application.old.MonkeyApp
+import monkey.util.material.ColorMaterial
+
+import scala.collection.mutable.ArrayBuffer
+
+/** A simple example of vehicle physics. Builds upon HelloStaticBody. */
+object HelloVehicle extends MonkeyApp:
+
+  var physicsSpace: PhysicsSpace = null
+
+  override def simpleInitApp() =
+    physicsSpace = configurePhysics()
+
+    // Create a wedge-shaped vehicle with a low center of gravity.
+    // The local forward direction is +Z.
+    val noseZ = 1.4f // offset from chassis center
+    val spoilerY = 0.5f // offset from chassis center
+    val tailZ = -0.7f // offset from chassis center
+    val undercarriageY = -0.1f // offset from chassis center
+    val halfWidth = 0.4f
+
+    val cornerLocations = ArrayBuffer[Float]()
+    cornerLocations ++= Array(+halfWidth, undercarriageY, noseZ)
+    cornerLocations ++= Array(-halfWidth, undercarriageY, noseZ)
+    cornerLocations ++= Array(+halfWidth, undercarriageY, tailZ)
+    cornerLocations ++= Array(-halfWidth, undercarriageY, tailZ)
+    cornerLocations ++= Array(+halfWidth, spoilerY, tailZ)
+    cornerLocations ++= Array(-halfWidth, spoilerY, tailZ)
+    val wedgeShape = HullCollisionShape(cornerLocations.toArray)
+    val mass = 5f
+    val vehicle = PhysicsVehicle(wedgeShape, mass)
+    vehicle.setSuspensionCompression(6f) // default=0.83
+    vehicle.setSuspensionDamping(7f) // default=0.88
+    vehicle.setSuspensionStiffness(150f) // default=5.88
+
+    // Add 4 wheels, 2 in the front (for steering) and 2 in the rear.
+    val front = true
+    val rear = false
+    val frontAxisZ = 0.7f * noseZ // offset from chassis center
+    val rearAxisZ = 0.8f * tailZ // offset from chassis center
+    val radius = 0.3f // of each tire
+    val restLength = 0.2f // of the suspension
+    val xOffset = 0.9f * halfWidth
+    val axleDirection = Vector3f(-1f, 0f, 0f)
+    val suspensionDirection = Vector3f(0f, -1f, 0f)
+    vehicle.addWheel(V(-xOffset, 0f, frontAxisZ), suspensionDirection, axleDirection, restLength, radius, front)
+    vehicle.addWheel(V(+xOffset, 0f, frontAxisZ), suspensionDirection, axleDirection, restLength, radius, front)
+    vehicle.addWheel(V(-xOffset, 0f, rearAxisZ), suspensionDirection, axleDirection, restLength, radius, rear)
+    vehicle.addWheel(V(+xOffset, 0f, rearAxisZ), suspensionDirection, axleDirection, restLength, radius, rear)
+
+    physicsSpace.addCollisionObject(vehicle)
+    // Apply a steering angle of 6 degrees left (to the front wheels).
+    vehicle.steer(FastMath.PI / 30f)
+    // Apply a constant acceleration (to the chassis).
+    vehicle.accelerate(1f)
+    // Add a static plane to represent the ground.
+    val y = -radius - 0.35f
+    addPlane(y)
+
+  private def addPlane(y: Float) =
+    val shape = PlaneCollisionShape(Plane(Vector3f.UNIT_Y, y))
+    val body = PhysicsRigidBody(shape, 50f) // PhysicsBody.massForStatic)
+    val material = ColorMaterial(assetManager)
+    // body.setDebugMaterial(material.delegate)
+    // body.setDebugMeshInitListener(planeDmiListener)
+    physicsSpace.addCollisionObject(body)
+
+  private def configurePhysics(): PhysicsSpace =
+    val bulletAppState = BulletAppState()
+    stateManager.attach(bulletAppState)
+    bulletAppState.setDebugEnabled(true) // for debug visualization
+    bulletAppState.getPhysicsSpace()
