@@ -1,0 +1,53 @@
+package test.terrain1.map
+
+import com.jme3.app.SimpleApplication
+import com.jme3.asset.plugins.FileLocator
+import com.jme3.font.BitmapText
+import com.jme3.input.event.KeyInputEvent
+import com.jme3.terrain.heightmap.HillHeightMap
+import com.jme3.ui.Picture
+import jmx.RawInputAdapter
+import jmx.ext.Ext
+
+object HeightMapTestHud2 : SimpleApplication(), RawInputAdapter, Ext {
+
+    lateinit var text: BitmapText
+    lateinit var picture: Picture
+
+    override fun simpleInitApp() {
+        removeAppStates()
+        assetManager.registerLocator(".", FileLocator::class.java)
+
+        val w = settings.width
+        val h = settings.height
+        text = text()
+        picture = picture(257)
+        // guiNode.attachChild(text)
+        guiNode.attachChild(picture)
+    }
+
+    override fun onKeyEvent(e: KeyInputEvent) {
+        if (e.isPressed) println(e.keyChar)
+    }
+
+    fun text(): BitmapText {
+        text = BitmapText(guiFont)
+        text.size = 38f
+        text.color = C(0.2f, 0.8f, 0.2f)
+        text.text = "3.1415"
+        text.localTranslation.set(100f, 100f, 1f)
+        return text
+    }
+
+    fun picture(size: Int): Picture {
+        val map = HillHeightMap(size, 1000, 50f, 100f)
+        val pic = map.toPicture(assetManager)
+        pic.localTranslation.set(20f, 10f, 0f)
+        return pic
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        start()
+    }
+}

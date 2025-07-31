@@ -1,0 +1,77 @@
+package test
+
+import com.jme3.app.SimpleApplication
+import com.jme3.collision.CollisionResults
+import com.jme3.material.Material
+import com.jme3.math.ColorRGBA
+import com.jme3.math.Quaternion
+import com.jme3.math.Ray
+import com.jme3.math.Vector3f
+import com.jme3.scene.Geometry
+import com.jme3.scene.Mesh
+import com.jme3.scene.debug.Arrow
+import com.jme3.scene.shape.Box
+import com.jme3.scene.shape.Sphere
+import test.input.RawInputAdapter
+
+import scala.util.Random
+
+// todo: reset color on "pick exit"
+
+object PickingTest extends SimpleApplication, RawInputAdapter:
+
+  val rot = Quaternion()
+  val results = CollisionResults()
+
+  var contactPoint: Geometry = null
+  var contactNormal: Geometry = null
+
+  override def simpleInitApp() =
+    cam.getLocation.set(0f, 100f, 100f)
+    cam.lookAt(Vector3f(0f, 0f, 0f), Vector3f(0f, 1f, 0f))
+    val mat = Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+    mat.setColor("Color", ColorRGBA.Red)
+    contactPoint = geom(Sphere(8, 8, 0.1f), mat)
+    contactNormal = geom(Arrow(Vector3f(0f, 0f, 1f)), mat)
+    flyCam.setEnabled(false)
+    for i <- 1 to 100 do
+      val mat = Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+      mat.setColor("Color", ColorRGBA.Green)
+      val r = 50
+      val x = -r + Random.nextInt(2 * r).toFloat
+      val y = -r + Random.nextInt(2 * r).toFloat
+      val z = -r + Random.nextInt(2 * r).toFloat
+      rootNode.attachChild(geom(Box(1f, 1f, 1f), mat, Vector3f(x, y, z)))
+
+  // use input listener
+  override def simpleUpdate(tpf: Float) =
+    val org = cam.getWorldCoordinates(inputManager.getCursorPosition, 0.0f)
+    val dir = cam.getWorldCoordinates(inputManager.getCursorPosition, 0.3f)
+    dir.subtractLocal(org).normalizeLocal()
+    results.clear()
+    rootNode.collideWith(Ray(org, dir), results)
+    if results.size > 0 then
+      val closest = results.getClosestCollision()
+      val mat = closest.getGeometry.getMaterial
+      mat.setColor("Color", ColorRGBA.Red)
+      // reset when collision vanishes
+      rot.lookAt(closest.getContactNormal, Vector3f.UNIT_Y)
+      contactPoint.setLocalTranslation(closest.getContactPoint)
+      contactNormal.setLocalTranslation(closest.getContactPoint)
+      contactNormal.setLocalRotation(rot)
+      rootNode.attachChild(contactPoint)
+      rootNode.attachChild(contactNormal)
+    else
+      rootNode.detachChild(contactPoint)
+      rootNode.detachChild(contactNormal)
+
+  private def geom(mesh: Mesh, mat: Material, pos: Vector3f = Vector3f(0f, 0f, 0f)) =
+    val res = Geometry("", mesh)
+    res.setMaterial(mat)
+    res.setLocalTranslation(pos)
+    res
+
+  def main(args: Array[String]) =
+    start()
+    
+

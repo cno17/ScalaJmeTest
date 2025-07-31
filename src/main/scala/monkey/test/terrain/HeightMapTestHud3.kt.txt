@@ -1,0 +1,56 @@
+package test.terrain1.map
+
+import com.jme3.app.SimpleApplication
+import com.jme3.asset.plugins.FileLocator
+import com.jme3.font.BitmapText
+import com.jme3.input.KeyInput
+import com.jme3.input.event.KeyInputEvent
+import com.jme3.system.AppSettings
+import com.jme3.terrain.heightmap.AbstractHeightMap
+import com.jme3.terrain.heightmap.HillHeightMap
+import com.jme3.ui.Picture
+import jmx.RawInputAdapter
+import jmx.ext.Ext
+
+object HeightMapTestHud3 : SimpleApplication(), RawInputAdapter, Ext {
+
+    var size = 17
+    lateinit var picture: Picture
+
+    override fun simpleInitApp() {
+        removeAppStates()
+        size = settings.height - 50
+        inputManager.addRawInputListener(this)
+        assetManager.registerLocator(".", FileLocator::class.java)
+        picture = picture()
+        guiNode.attachChild(picture)
+    }
+
+    // mouse events!
+
+    override fun onKeyEvent(e: KeyInputEvent) {
+        if (!e.isPressed) return
+        val map = HillHeightMap(size, 1000, 50f, 100f)
+        val tex = map.toTexture(assetManager)
+        picture.setTexture(assetManager, tex, false)
+        println(e.keyChar)
+    }
+
+    fun picture(): Picture {
+        val w = settings.width.toFloat()
+        val h = settings.height.toFloat()
+        val map = HillHeightMap(size, 1000, 50f, 100f)
+        val pic = map.toPicture(assetManager)
+        pic.localTranslation.set((w - size) /2,  (h - size) / 2, 0f)
+        return pic
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val s = AppSettings(true)
+        s.width = 1200
+        s.height = 900
+        setSettings(s)
+        start()
+    }
+}

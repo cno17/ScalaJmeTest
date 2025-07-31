@@ -1,0 +1,81 @@
+package test.jme.terrain
+
+import com.jme3.app.SimpleApplication
+import com.jme3.font.BitmapText
+import com.jme3.input.event.KeyInputEvent
+import com.jme3.terrain.heightmap.AbstractHeightMap
+import com.jme3.terrain.heightmap.HeightMap
+import com.jme3.terrain.heightmap.HillHeightMap
+import com.jme3.texture.Image
+import com.jme3.texture.Texture2D
+import com.jme3.texture.image.ColorSpace
+import com.jme3.ui.Picture
+import jme.util.MonkeyApp
+import jmx.RawInputAdapter
+import jme.ext.terrain.HeightMapExt
+import org.lwjgl.BufferUtils
+
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
+
+object HeightMapTestHud1 extends MonkeyApp, HeightMapExt:
+
+    var btext: BitmapText = null
+    var map: HeightMap = null
+    var picture: Picture = null
+
+    override def simpleInitApp() =
+        removeInitialAppStates()
+        val w = settings.getWidth
+        val h = settings.getHeight
+        btext = text()
+        map = map(257)
+        picture = picture(map)
+        guiNode.attachChild(btext)
+        guiNode.attachChild(picture)
+    
+
+    override def onKeyEvent(e: KeyInputEvent) =
+        if e.isPressed then println(e.getKeyChar)
+    
+
+    def text(): BitmapText =
+        btext = BitmapText(guiFont)
+        btext.setSize(38f)
+        btext.setColor(C(0.2f, 0.8f, 0.2f))
+        btext.setText("3.1415")
+        btext.getLocalTranslation.set(100f, 100f, 1f)
+        btext
+    
+
+    def map(size: Int): HeightMap =
+        val map = HillHeightMap(size, 1000, 50f, 100f)
+        map
+
+    def picture(map: HeightMap): Picture =
+        val s = map.getSize
+        val fa = map.getHeightMap
+        val bb = BufferUtils.createByteBuffer(fa.size * 4)
+//        for f in fa) {
+//            bb.putFloat(f)
+//        }
+        bb.rewind()
+        val img = Image(Image.Format.R8I, s, s, bb, ColorSpace.Linear)
+        val tex = Texture2D(img)
+        picture = Picture("pic")
+        // picture.setImage(assetManager, "Textures/Terrain/BrickWall/BrickWall.jpg", false)
+        picture.setTexture(assetManager, tex, false)
+        picture.setWidth(s)
+        picture.setHeight(s)
+        picture.setLocalTranslation(10f, 10f, 0f)
+        return picture
+    
+
+    // --> ext
+    def toByteArray(map: AbstractHeightMap): Array[Byte] =
+        val img = map.toBufferedImage()
+        val out = ByteArrayOutputStream()
+        ImageIO.write(img, "jpg", out)
+        val bytes = out.toByteArray()
+        bytes
+    

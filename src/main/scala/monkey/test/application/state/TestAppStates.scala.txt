@@ -1,0 +1,47 @@
+package monkey.test.app.state
+
+import com.jme3.app.LegacyApplication
+import com.jme3.app.state.AbstractAppState
+import com.jme3.app.state.RootNodeAppState
+import monkey.util.application.simple.SimpleApp
+// import com.jme3.niftygui.NiftyJmeDisplay
+import com.jme3.scene.Spatial
+import com.jme3.system.AppSettings
+import com.jme3.system.JmeContext
+import com.jme3.texture.image.ColorSpace
+
+object TestAppStates extends SimpleApp:
+
+  override def init() =
+    val state = RootNodeAppState()
+    viewPort3D.attachScene(state.getRootNode)
+    stateManager.attach(state)
+    val model = assetManager.loadModel("Models/Teapot/Teapot.obj")
+    model.scale(3)
+    model.setMaterial(assetManager.loadMaterial("Interface/Logo/Logo.j3m"))
+    state.getRootNode.attachChild(model)
+    val colorSpace = if (renderer.isMainFrameBufferSrgb) ColorSpace.sRGB
+    else ColorSpace.Linear
+    val niftyDisplay = new Nothing(assetManager, inputManager, audioRenderer, guiViewPort, colorSpace)
+    val startScreen = new Nothing(this)
+    niftyDisplay.getNifty.fromXml("Interface/Nifty/HelloJme.xml", "start", startScreen)
+    guiViewPort.addProcessor(niftyDisplay)
+  
+  override def update(): Unit = {
+    super.update()
+    // do some animation
+    val tpf = timer.getTimePerFrame
+    stateManager.update(tpf)
+    stateManager.render(renderManager)
+    // render the viewports
+    renderManager.render(tpf, context.isRenderable)
+    
+    
+class RootNodeState extends AbstractAppState:
+
+  val rootNode = Node("Root Node")
+  
+  override def update(tpf: Float) =
+    super.update(tpf);
+    rootNode.updateLogicalState(tpf);
+    rootNode.updateGeometricState();

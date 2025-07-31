@@ -1,0 +1,73 @@
+package shaderblow
+
+import com.jme3.asset.AssetManager
+import com.jme3.material.Material
+import com.jme3.math.Matrix4f
+import com.jme3.post.Filter
+import com.jme3.renderer.RenderManager
+import com.jme3.renderer.ViewPort
+
+class MotionBlurFilter extends Filter("MotionBlur"):
+    // Sets the strength/scale of the "blur" at 100 FPS  
+    var strength = 1f
+    var blurSamples = 8
+
+    private var viewPort: ViewPort = null
+
+    private val tempMat = Matrix4f()
+    private val currentProjectionMatrix = Matrix4f()
+    private val currentToPreviousMatrix = Matrix4f()
+
+
+    override def getMaterial(): Material = material
+    
+
+    override def isRequiresDepthTexture() = true
+    
+
+    // Gets how "smooth" the blur is. Higher is more smooth, but more GPU intensive.
+    def getBlurSamples() = blurSamples
+    
+
+    /** Sets the smoothness of the "blur". Lower is faster, but banding is more noticeable.  Higher is slower, but the blur is smoother. 8 is a good balance.  */
+    def setBlurSamples(num: Int) =
+        blurSamples = num
+        if material != null then material.setInt("BlurSamples", blurSamples)
+
+    override def initFilter(manager: AssetManager, renderManager: RenderManager, vp: ViewPort, w: Int, h: Int) =
+        material = Material(manager, "ShaderBlow/MatDefs/Filters/MotionBlur/MotionBlur.j3md")
+        viewPort = vp
+
+
+        // set the material parameters to whatever the fields actually are
+        // since this initFilter() method doesnt get called
+        // til right before the first render, but by then every AppStates'
+        // update() methods have run once and if we are changing these
+        // parameters in that time, they have already changed but since the material was null
+        // at that point the material's value wasn't set!... just trust me on this one...
+        strength = strength
+        setBlurSamples(blurSamples)
+    
+
+
+    /** Calculates and sets the material's curr-to-prev Transformation matrix
+     * We do this once the CPU to avoid calling one extra 4x4 matrix-multiplication per fragment on the GPU, which nets ~10% performance increase  */
+    private fun setCurrToPrevMatrix() 
+        currentToPreviousMatrix.set(currentProjectionMatrix) // "previous projection matrix"
+
+        currentProjectionMatrix.set(viewPort!!.camera.viewProjectionMatrix) // "current projection matrix"
+
+        currentToPreviousMatrix.multLocal(currentProjectionMatrix.invert(tempMat)) // "prev proj mat" * "curr proj mat INVERTED"
+        material.setMatrix4("CurrentToPreviousMat", currentToPreviousMatrix)
+    
+
+
+    override fun preFrame(delta: Float) 
+        // makes the blur framerate independent
+        // makes more sense to do 1 calculation on CPU versus 1 per fragment on GPU
+        material.setFloat("Strength", strength * (1f / delta / 100f))
+
+
+        // calculate the currentToPrevious transformation matrix
+        setCurrToPrevMatrix()
+    

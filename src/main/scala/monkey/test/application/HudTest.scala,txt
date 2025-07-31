@@ -1,0 +1,29 @@
+package monkey.test.app
+
+import com.jme3.font.BitmapText
+import com.jme3.input.event.KeyInputEvent
+import com.jme3.ui.Picture
+import monkey.util.application.old.MonkeyApp
+import monkey.util.app.simple.SimpleApp
+
+object HudTest extends SimpleApp:
+
+  override def init() =
+    val w = settings.getWidth
+    val h = settings.getHeight
+    val text = BitmapText(guiFont)
+    text.setSize(38f)
+    text.setColor(C(0.2f, 0.8f, 0.2f))
+    text.setText("3.1415")
+    text.setLocalTranslation(100f, 100f, 1f)
+    val picture = Picture("pic")
+    picture.setImage(assetManager, "Images/Bird1.jpg", false)
+    picture.setWidth(200f)
+    picture.setHeight(200f)
+    picture.setLocalTranslation(10f, 10f, 0f)
+    rootNode2D.attachChild(text)
+    rootNode2D.attachChild(picture)
+    keyListeners += onKeyEvent
+  
+  def onKeyEvent(e: KeyInputEvent) =
+    if e.isPressed then println(e.getKeyChar)
