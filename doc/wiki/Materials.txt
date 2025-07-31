@@ -1,0 +1,54 @@
+
+
+BLOCK LANGUAGES
+
+- materials are defined in a curly-bracket-language: blocks are surrounded by 
+  curly brackets and contain other blocks and statements 
+
+    Block {
+        // Comment
+        SubBlock1 {
+            Statement1
+        }
+        SubBlock2 {
+            SubSubBlock3 {
+                Statement2
+                Statement3
+                Statement4; Statement5 // two statements on the same line
+            }
+        }
+    }
+
+MATERIAL DEFINITIONS
+
+- a matdef can contain multiple techniques, each technique describes a particular way 
+  to draw an object
+
+- a shader can reference (import functions from) shader libraries which in turn can
+  reference other shader libraries
+
+- a shaders can also take advantage of “defines” that are specified inside matdefs
+
+? the defines “bind” into material parameters, so that a change in a material parameter 
+  can apply or remove a define from the corresponding shader. This allows the shader to 
+  completely change in behavior during run-time.  
+
+- a MaterialDef block can contain one MaterialParameters block and one or more 
+  Technique blocks
+
+- every parameter has a type and a name and can have a default values   
+
+TECHNIQUES
+
+- a technique can have nested blocks any many types of statements
+
+- the two most important statements are the FragmentShader and VertexShader statements
+
+- when a material is applied to an object, the shader uniforms (prefixed with an “m_”)
+  are set based on the material parameter values specified in the material instance
+
+    MaterialParameters {
+        Float Shininess
+    }
+
+    uniform float m_Shininess;

@@ -1,0 +1,48 @@
+
+- spotLight.pos = cam.pos, spotLight.dir = cam.dir
+
+- RigidBodies2dDemo (alter Bekannter)
+
+- quick hull: ConvexHullShape
+
+- terrain physics with gravity (moon drive)
+
+- spherical terrain tiles
+
+- scrollable spherical grid
+
+- JME config file: load at start
+
+- mat.setBlendMode(m) = mat.getAdditionalRenderState().setBlendMode(m)
+
+- ExtrudedTextShape
+
+- scrolling 2.5D text: starwars, galactica
+
+- transform (sca, rot, tra) "manipulators"
+
+- mesh/material sharing among nodes: Groups? e.g. Torus Group with 100 instances
+
+- width, height, depth -> extentX|Y|Z
+
+- pos, dir | tra, rot, sca | pos, vel acc | add, sub, mul, drive
+
+- HUD: dynamic marauder map, render to texture?
+
+- convert .blend file to .j3o programmatically and load it into scene
+
+- how to create LODs for a mesh/model? LodGenerator?
+
+- Java: Planet Generator: Instanced Meshes?
+
+- Boids: 2, 2.5, 3 dynamic
+
+- Performance Test: 
+    - rotating cubes, tori, tesselated spheres
+    - en/disable frustum culling
+    - how to get info about rendered and culled nodes?
+
+- Apply earth texture to cube, sphere, Torus
+
+- Constructor extensions: Box(Vector3f(rx, ry, rz)) -> Box(rx, ry, rz)
+

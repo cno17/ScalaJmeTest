@@ -1,0 +1,59 @@
+
+- a shader node ...
+    - is a self sufficient piece of glsl code that accepts inputs and produces outputs
+
+- the output of a SN can be directed to the input of another SN (graph!)
+
+- input and output variables declared in the shader node definition can be used without 
+  being declared in the shader code
+
+
+
+
+ShaderNodeDefinitions {
+    ShaderNodeDefinition TransformPosition{
+        Type: Vertex        
+        Shader GLSL100: Common/MatDefs/ShaderNodes/Basic/transformPosition.vert
+        Documentation {
+            This node transforms a position according to the given matrix
+            @input inputPosition the position to transform
+            @input transformsMatrix the matrix to use for this transformation
+            @output outPosition the transformed position
+        } 
+        Input {
+            vec3 inputPosition
+            mat4 transformsMatrix
+        }
+        Output {
+            vec4 outPosition
+        }
+    }
+}
+
+void main(){
+     outPosition = transformsMatrix * vec4(inputPosition, 1.0);
+}
+
+ShaderNodeDefinitions {
+    ShaderNodeDefinition OneMinus {      
+        Type: Fragment
+        Shader GLSL100: Common/MatDefs/ShaderNodes/Math/oneMinus.frag
+        Documentation{
+            return 1 - value
+            @input value a float  
+            @output outFloat the resulting value
+        }
+        Input {
+            float value       
+        }
+        Output {
+            float outFloat
+        }
+    }
+}
+
+oneMinus.frag
+
+void main(){
+    outFloat = 1 - value;
+}

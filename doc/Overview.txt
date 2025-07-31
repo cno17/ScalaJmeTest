@@ -1,0 +1,5 @@
+
+
+- shapes are nodes not meshes!
+
+- are extension methods visible in subclasses?
