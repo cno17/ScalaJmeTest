@@ -1,0 +1,33 @@
+package game.grid
+
+import com.jme3.asset.AssetManager
+import com.jme3.input.KeyInput
+import com.jme3.input.event.KeyInputEvent
+import com.jme3.material.Material
+import com.jme3.math.ColorRGBA
+import com.jme3.math.Vector3f
+import com.jme3.scene.Geometry
+import com.jme3.scene.Node
+import com.jme3.scene.shape.Box
+import jme.util.grid.Tile
+import jmx.RawInputAdapter
+
+class Car(val tile: Tile, am: AssetManager) extends Node, RawInputAdapter:
+
+    val vel = Vector3f()
+    val acc = Vector3f()
+
+    def init() =
+        val mat = Material(am, "Common/MatDefs/Misc/Unshaded.j3md")
+        mat.setColor("Color", ColorRGBA(0.2f, 0.2f, 0.8f, 1.0f))
+        val geo = Geometry("Box", Box(3f, 3f, 0.5f))
+        geo.setMaterial(mat)
+        // move(Tile.extX / 2, Tile.extY / 2, 1f)
+        tile.attachChild(this)
+
+//    override def onKeyEvent(e: KeyInputEvent) =
+//        if e.isPressed || e.isRepeating then
+//            if e.getKeyCode == KeyInput.KEY_J then  Game2.grid.scrollW()
+//            if e.getKeyCode == KeyInput.KEY_L then  Game2.grid.scrollE()
+//            if e.getKeyCode == KeyInput.KEY_K then  Game2.grid.scrollS()
+//            if e.getKeyCode == KeyInput.KEY_I then  Game2.grid.scrollN()

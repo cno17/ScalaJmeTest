@@ -1,0 +1,207 @@
+package jme.util.terrain
+
+import com.jme3.asset.AssetManager
+import com.jme3.material.Material
+import com.jme3.math.ColorRGBA
+import com.jme3.math.Vector3f
+import com.jme3.scene.Geometry
+import com.jme3.scene.Mesh
+import com.jme3.scene.Node
+import com.jme3.scene.VertexBuffer
+import com.jme3.terrain.heightmap.AbstractHeightMap
+import com.jme3.util.BufferUtils
+import jme.ext.Ext
+
+// data class?
+
+/**
+ * A terrain node is composed of six geometries:
+ * - top
+ * - bottom
+ * - west = minI
+ * - east = maxI
+ * - south = minJ
+ * - north = maxJ
+ */
+class TerrainNode(val map: AbstractHeightMap, val assetManager: AssetManager) extends Node, Ext:
+
+    val colorProvider = SimpleColorProvider()
+
+    // matTerrain, matFrame!
+    // val matTop = material(0.2f, 0.2f, 0.2f)
+    val matTop = Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+
+    val matSide = material(0.5f, 0.5f, 0.5f)
+
+    def init() =
+        matTop.setBoolean("VertexColor", true)
+        matTop.additionalRenderState.isWireframe = true
+        val geoTop = geometry(topMesh(), matTop)
+        val geoSide = geometry(sideMesh(), matSide)
+        attachChild(geoTop)
+        attachChild(geoSide)
+
+    def material(r: Float, g: Float, b: Float) =
+        val mat = Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md")
+        mat.setColor("Color", C(r, g, b))
+        mat.additionalRenderState.isWireframe = true
+        mat
+    
+
+    def geometry(mesh: Mesh, mat: Material) =
+        val geo = Geometry("", mesh)
+        geo.material = mat
+        geo
+    
+
+    def normalAt(i: Int, j: Int) =
+        val num = map.size
+        val u = Vector3f()
+        val v = Vector3f()
+        val n = Vector3f()
+        if (i < num - 1) 
+            val z0 = map.getTrueHeightAtPoint(i + 0, j)
+            val z1 = map.getTrueHeightAtPoint(i + 1, j)
+            u.set(1f, 0f, z1 - z0)
+         else 
+            val z0 = map.getTrueHeightAtPoint(i - 1, j)
+            val z1 = map.getTrueHeightAtPoint(i - 0, j)
+            u.set(1f, 0f, z1 - z0)
+        
+        if (j < num - 1) 
+            val z0 = map.getTrueHeightAtPoint(i, j + 0)
+            val z1 = map.getTrueHeightAtPoint(i, j + 1)
+            v.set(0f, 1f, z1 - z0)
+         else 
+            val z0 = map.getTrueHeightAtPoint(i, j - 1)
+            val z1 = map.getTrueHeightAtPoint(i, j - 0)
+            v.set(0f, 1f, z1 - z0)
+        
+        u.cross(v, n)
+        n.normalizeLocal()
+
+    def topMesh() =
+        val num = map.size
+        val ext = map.findMinMaxHeights()
+        val min = ext[0]
+        val max = ext[1]
+        println("$min - $max")
+        val off = -0.5f * (num - 1)
+        // TODO: Arrays
+        val pl = mutableListOf<Vector3f>()
+        val nl = mutableListOf<Vector3f>()
+        val cl = mutableListOf<ColorRGBA>()
+        for j <- 0 to num - 1 do
+            for i <- 0 to num - 1 do
+                val z = map.getTrueHeightAtPoint(i, j)
+                pl += Vector3f(off + i, off + j, z)
+                nl += normalAt(i, j)
+                cl += colorProvider.colorFor(z / max)
+
+        val il = mutableListOf<Int>()
+        for j <- 0 to num - 2 do 
+            for i <- 0 to num - 2 do 
+                if (i + j) % 2 == 0 then 
+                    il += i + 0 + (j + 0) * num
+                    il += i + 1 + (j + 0) * num
+                    il += i + 1 + (j + 1) * num
+                    il += i + 1 + (j + 1) * num
+                    il += i + 0 + (j + 1) * num
+                    il += i + 0 + (j + 0) * num
+                 else 
+                    il += i + 1 + (j + 0) * num
+                    il += i + 1 + (j + 1) * num
+                    il += i + 0 + (j + 1) * num
+                    il += i + 0 + (j + 1) * num
+                    il += i + 0 + (j + 0) * num
+                    il += i + 1 + (j + 0) * num
+                
+            
+        
+        val pb = BufferUtils.createFloatBuffer(*pl.toTypedArray())
+        val nb = BufferUtils.createFloatBuffer(*nl.toTypedArray())
+        val cb = BufferUtils.createFloatBuffer(*cl.toTypedArray())
+        val ib = BufferUtils.createIntBuffer(*il.toIntArray())
+        val mesh = Mesh()
+        mesh.mode = Mesh.Mode.Triangles
+        mesh.setBuffer(VertexBuffer.Type.Position, 3, pb)
+        mesh.setBuffer(VertexBuffer.Type.Normal, 3, nb)
+        mesh.setBuffer(VertexBuffer.Type.Color, 4, cb)
+        mesh.setBuffer(VertexBuffer.Type.Index, 1, ib)
+        mesh
+    
+
+    def sideMesh(): Mesh 
+        val num = map.size
+        val offX = -0.50f * (num - 1)
+        val offY = -0.50f * (num - 1)
+        val offZ = -0.02f * num
+        val pa = Array(num * 8)  Vector3f() 
+        val na = Array(num * 8)  Vector3f() 
+        for (i in 0..num - 1) 
+            // south
+            pa[0 * num + 2 * i + 0].set(offX + i, +offY, offZ)
+            pa[0 * num + 2 * i + 1].set(offX + i, +offY, map.getTrueHeightAtPoint(i, 0))
+            na[0 * num + 2 * i + 0].set(0f, -1f, 0f)
+            na[0 * num + 2 * i + 1].set(0f, -1f, 0f)
+            // north
+            pa[2 * num + 2 * i + 0].set(offX + i, -offY, offZ)
+            pa[2 * num + 2 * i + 1].set(offX + i, -offY, map.getTrueHeightAtPoint(i, num - 1))
+            na[2 * num + 2 * i + 0].set(0f, 1f, 0f)
+            na[2 * num + 2 * i + 1].set(0f, 1f, 0f)
+            // west
+            pa[4 * num + 2 * i + 0].set(+offX, offY + i, offZ)
+            pa[4 * num + 2 * i + 1].set(+offX, offY + i, map.getTrueHeightAtPoint(0, i))
+            na[4 * num + 2 * i + 0].set(-1f, 0f, 0f)
+            na[4 * num + 2 * i + 1].set(-1f, 0f, 0f)
+            // east
+            pa[6 * num + 2 * i + 0].set(-offX, offY + i, offZ)
+            pa[6 * num + 2 * i + 1].set(-offX, offY + i, map.getTrueHeightAtPoint(num - 1, i))
+            na[6 * num + 2 * i + 0].set(1f, 0f, 0f)
+            na[6 * num + 2 * i + 1].set(1f, 0f, 0f)
+        
+        // TODO array!
+        val il = mutableListOf<Int>()
+        for (i in 0 * num..1 * num - 2) 
+            il += 2 * (i + 0) + 0
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 0) + 1
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 1) + 1
+            il += 2 * (i + 0) + 1
+        
+        for (i in 1 * num..2 * num - 2) 
+            il += 2 * (i + 0) + 0
+            il += 2 * (i + 0) + 1
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 0) + 1
+            il += 2 * (i + 1) + 1
+        
+        for (i in 2 * num..3 * num - 2) 
+            il += 2 * (i + 0) + 0
+            il += 2 * (i + 0) + 1
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 0) + 1
+            il += 2 * (i + 1) + 1
+        
+        for (i in 3 * num..4 * num - 2) 
+            il += 2 * (i + 0) + 0
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 0) + 1
+            il += 2 * (i + 1) + 0
+            il += 2 * (i + 1) + 1
+            il += 2 * (i + 0) + 1
+        
+        val pb = BufferUtils.createFloatBuffer(*pa)
+        val nb = BufferUtils.createFloatBuffer(*na)
+        val ib = BufferUtils.createIntBuffer(*il.toIntArray())
+        val mesh = Mesh()
+        mesh.mode = Mesh.Mode.Triangles
+        mesh.setBuffer(VertexBuffer.Type.Position, 3, pb)
+        mesh.setBuffer(VertexBuffer.Type.Normal, 3, nb)
+        mesh.setBuffer(VertexBuffer.Type.Index, 1, ib)
+        mesh
+    
+

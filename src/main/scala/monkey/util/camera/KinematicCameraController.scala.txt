@@ -1,0 +1,49 @@
+package jme.util.camera
+
+import com.jme3.input.event.MouseButtonEvent
+import com.jme3.input.event.MouseMotionEvent
+import com.jme3.math.Quaternion
+import com.jme3.math.Vector3f
+import jme.util.MonkeyApp
+
+class KinematicCameraController(val app: MonkeyApp) extends CameraController:
+
+  private var dx = 0f
+  private var lbd = false
+  private var rbd = false
+
+  private var vel = 0f
+  private var acc = 0f
+
+  private val v1 = Vector3f()
+  private val v2 = Vector3f()
+  private val q1 = Quaternion()
+  private val q2 = Quaternion()
+
+  initialize()
+
+  override def initialize() =
+    app.mouseButtonListeners += onMouseButtonEvent
+    app.mouseMotionListeners += onMouseMotionEvent
+
+  override def update(tpf: Float) =
+    acc = if lbd then -0.001f else if rbd then +0.001f else 0
+    vel = Math.min(vel + acc, 0)
+    v1.set(cam.getTranslation)
+    v1.addLocal(cam.getDirection(v2), -vel)
+    q1.set(cam.getRotation)
+    q1.multLocal(q2.fromAngles(0, dx * -0.02f, 0))
+    cam.setTranslation(v1)
+    cam.setRotation(q1)
+
+  override def cleanup() =
+    app.mouseButtonListeners -= onMouseButtonEvent
+    app.mouseMotionListeners -= onMouseMotionEvent
+
+  private def onMouseButtonEvent(e: MouseButtonEvent) =
+    lbd = e.getButtonIndex == 0 && e.isPressed
+    rbd = e.getButtonIndex == 1 && e.isPressed
+
+  private def onMouseMotionEvent(e: MouseMotionEvent) =
+    val rx = app.width * 0.5f
+    dx = (e.getX - rx) / rx
